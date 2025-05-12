@@ -40,7 +40,7 @@ impl Default for WorldCamera {
 impl Deref for WorldCamera {
     type Target = Camera2D;
     fn deref(&self) -> &Self::Target {
-        return &self.camera;
+        &self.camera
     }
 }
 

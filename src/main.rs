@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 use camera::{UICamera, WorldCamera};
 use errors::Nresult;
 use macroquad::prelude::*;
@@ -13,7 +15,7 @@ mod weapons;
 async fn main() -> Nresult {
     debug!("Starting.");
     set_panic_handler(|msg, backtrace| async move {
-        native_dialog::DialogBuilder::message().set_text(format!("FATAL ERROR: {msg}\nbacktrace:\n{backtrace}\n\nPlease report this to the devs at https://github.com/shuntia/pixel_rebels")).set_level(native_dialog::MessageLevel::Error).set_title(":(").alert().show().expect(&format!("The dialog failed. I don't know why.\nOriginal Message:{msg}\nOriginal Backtrace:\n{backtrace}"));
+        native_dialog::DialogBuilder::message().set_text(format!("FATAL ERROR: {msg}\nbacktrace:\n{backtrace}\n\nPlease report this to the devs at https://github.com/shuntia/pixel_rebels")).set_level(native_dialog::MessageLevel::Error).set_title(":(").alert().show().unwrap_or_else(|_|panic!("The dialog failed. I don't know why.\nOriginal Message:{msg}\nOriginal Backtrace:\n{backtrace}"));
     });
     debug!("Panic hook set.");
     let world = WorldCamera::default();

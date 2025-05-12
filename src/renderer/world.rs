@@ -4,7 +4,7 @@ use macroquad::prelude::*;
 pub async fn render_world(world: &World) {
     clear_background(DARKGREEN);
     draw_player(world.player_pos);
-    draw_enemies(&world);
+    draw_enemies(world);
 }
 
 fn draw_player(pos: Vec2) {

@@ -10,7 +10,7 @@ pub async fn get_mapid() -> u32 {
     *MAPID.read().await
 }
 
-const MAPS: [&'static str; 1] = ["assets/map0"];
+const MAPS: [&str; 1] = ["assets/map0"];
 
 pub fn get_map(id: u32) -> Result<PathBuf> {
     MAPS.get(id as usize - 1)

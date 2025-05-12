@@ -13,7 +13,7 @@ mod player;
 
 // CONSTANTS
 
-const SAVE_LOC: &'static str = "save/";
+const SAVE_LOC: &str = "save/";
 
 pub enum GameMode {
     Menu,
