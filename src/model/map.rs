@@ -17,5 +17,5 @@ pub fn get_map(id: u32) -> Result<PathBuf> {
         .ok_or(GameError::IllegalArgument(
             "Illegal index access on MAP.".into(),
         ))
-        .map(|o| PathBuf::from(o))
+        .map(PathBuf::from)
 }
