@@ -1,6 +1,8 @@
 use macroquad::prelude::*;
 
-pub struct HoardeEnemies {
+mod enemymap;
+
+pub struct HordeEnemies {
     pub id: Vec<u32>,
     pub loc: Vec<Vec2>,
     pub velocity: Vec<Vec2>,
@@ -27,9 +29,9 @@ pub struct EnemyRefMut<'a> {
     stun_timer: &'a mut f32,
 }
 
-impl HoardeEnemies {
-    pub fn new() -> HoardeEnemies {
-        HoardeEnemies {
+impl HordeEnemies {
+    pub fn new() -> HordeEnemies {
+        HordeEnemies {
             id: Vec::new(),
             loc: Vec::new(),
             velocity: Vec::new(),
@@ -79,8 +81,8 @@ impl HoardeEnemies {
     }
 }
 
-impl Default for HoardeEnemies {
+impl Default for HordeEnemies {
     fn default() -> Self {
-        HoardeEnemies::new()
+        HordeEnemies::new()
     }
 }

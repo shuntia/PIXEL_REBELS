@@ -1,3 +1,4 @@
+use macroquad::Error;
 use std::{any::Any, path::PathBuf};
 use thiserror::Error;
 
@@ -14,7 +15,7 @@ pub enum GameError {
     #[error("Timeout occured: {0}")]
     Timeout(String),
     #[error("Failed to load asset: {0}")]
-    AssetLoadFailure(PathBuf),
+    AssetLoadFailure(String),
     #[error("Unsupported Operation: {0}")]
     UnsupportedOperation(String),
     #[error("Unspecified I/O Error: {0}")]
@@ -25,6 +26,8 @@ pub enum GameError {
     Unexpected(String),
     #[error("Received Illegal Arguments!!! This should not happen!!! Message: {0}")]
     IllegalArgument(String),
+    #[error("Macroquad Error: {0}")]
+    MQError(#[from] Error),
     #[error("Miscellaneous Error: {0:?}")]
     Misc(#[from] Box<dyn std::error::Error>),
 }
