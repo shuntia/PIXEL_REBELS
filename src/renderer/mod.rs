@@ -12,12 +12,10 @@ pub struct Renderer {
 }
 impl Renderer {
     pub async fn render_ui(&mut self, stat: &Status) {
-        self.uicamera.activate();
         ui::render_ui(stat).await
     }
 
     pub async fn render_world(&mut self, world: &World) {
-        self.wcamera.activate();
         world::render_world(world).await
     }
 

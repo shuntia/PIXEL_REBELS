@@ -22,6 +22,7 @@ pub fn init_all() -> Nresult {
 
 fn init_all_inner() {
     MAPS.is_empty();
+    debug!("MAPS: {:?}", MAPS);
     SPRITES.is_empty();
 }
 
@@ -55,10 +56,22 @@ pub async fn load_texture2D(path: PathBuf) -> Result<Texture2D> {
 
 #[allow(clippy::manual_async_fn)]
 fn gen_loader(path: PathBuf) -> impl std::future::Future<Output = Texture2D> {
-    async move { load_texture2D(path).await.unwrap() }
+    async move {
+        let mut tex = load_texture(path.to_str().unwrap()).await.unwrap();
+        tex.set_filter(FilterMode::Nearest);
+        tex
+    }
 }
-#[allow(static_mut_refs)]
+
 pub fn get_map(id: u32) -> Result<&'static Texture2D> {
     MAPS.get(id as usize)
         .ok_or(GameError::AssetLoadFailure(format!("MAP {id} NOT FOUND")))
+}
+
+pub static crosshair_tex: Lazy<Texture2D> = Lazy::new(|| block_on(load_crosshair()));
+
+async fn load_crosshair() -> Texture2D {
+    let mut asset_loc = ASSET_LOC.to_owned();
+    asset_loc.push_str("crosshair.png");
+    load_texture(&asset_loc).await.unwrap()
 }

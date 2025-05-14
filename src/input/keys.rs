@@ -43,4 +43,7 @@ impl KbdMan {
     pub fn keypress_peek_unchecked(&mut self, keycode: KeyCode) -> bool {
         self.keypress.contains(&keycode)
     }
+    pub fn keydown(&mut self, keycode: KeyCode) -> bool {
+        self.keys.contains(&keycode)
+    }
 }

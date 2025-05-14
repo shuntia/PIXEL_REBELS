@@ -117,13 +117,15 @@ impl GameModel {
                             phase: TitlePhase::Menu(selection - 1),
                         }
                     }
-                    if self.input.kbd.keypress(KeyCode::Down) && !SAVE_PATHBUF_CACHE.read().unwrap().is_empty() && selection != SAVE_PATHBUF_CACHE.read().unwrap().len() as u32 - 1 {
+                    if self.input.kbd.keypress(KeyCode::Down)
+                        && !SAVE_PATHBUF_CACHE.read().unwrap().is_empty()
+                        && selection != SAVE_PATHBUF_CACHE.read().unwrap().len() as u32 - 1
+                    {
                         self.status.mode = GameMode::Title {
                             phase: TitlePhase::Menu(selection - 1),
                         }
                     }
                     if self.input.kbd.keypress(KeyCode::Enter) {
-                        self.world.map = 1;
                         self.status.mode = GameMode::Play;
                     }
                 }
@@ -132,10 +134,26 @@ impl GameModel {
         }
     }
     fn update_gameplay(&mut self) {
+        self.move_player();
         self.update_map();
     }
     fn update_map(&mut self) {
         clear_background(GRAY);
+    }
+    fn move_player(&mut self) {
+        //TODO implement hitboxes and out of bounds
+        if self.input.kbd.keydown(KeyCode::Up) {
+            self.world.player_pos.y -= get_frame_time() * self.player.speed;
+        }
+        if self.input.kbd.keydown(KeyCode::Down) {
+            self.world.player_pos.y += get_frame_time() * self.player.speed;
+        }
+        if self.input.kbd.keydown(KeyCode::Left) {
+            self.world.player_pos.x -= get_frame_time() * self.player.speed;
+        }
+        if self.input.kbd.keydown(KeyCode::Right) {
+            self.world.player_pos.x += get_frame_time() * self.player.speed;
+        }
     }
 }
 

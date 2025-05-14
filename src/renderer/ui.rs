@@ -1,11 +1,16 @@
-use crate::model::{GameMode, SAVE_PATHBUF_CACHE, Status, TitlePhase};
+use crate::{
+    assets::crosshair_tex,
+    model::{GameMode, SAVE_PATHBUF_CACHE, Status, TitlePhase},
+};
+use futures::executor::block_on;
 use macroquad::prelude::*;
+use once_cell::sync::Lazy;
 
 pub async fn render_ui(status: &Status) {
     match &status.mode {
         GameMode::Title { phase } => render_title(phase),
         GameMode::Pause => render_pause_menu(),
-        GameMode::Play => (),
+        GameMode::Play => render_crosshair(),
     }
 }
 
@@ -83,5 +88,18 @@ fn render_pause_menu() {
         screen_height() / 2.0,
         50.0,
         YELLOW,
+    );
+}
+fn render_crosshair() {
+    let mouse_pos = mouse_position();
+    draw_texture_ex(
+        &crosshair_tex,
+        mouse_pos.0 - 25.,
+        mouse_pos.1 - 25.,
+        WHITE,
+        DrawTextureParams {
+            dest_size: Some(Vec2 { x: 50., y: 50. }),
+            ..Default::default()
+        },
     );
 }
