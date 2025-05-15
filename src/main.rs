@@ -2,6 +2,7 @@
 
 use errors::Nresult;
 use macroquad::prelude::*;
+use signal_hook::{consts::signal, low_level::exit};
 
 mod assets;
 mod errors;
@@ -24,11 +25,41 @@ async fn main() -> Nresult {
             .unwrap_or_else(|_|panic!("The dialog failed. I don't know why.\nOriginal Message:{msg}\nOriginal Backtrace:\n{backtrace}"));
     });
     debug!("Panic hook set.");
+    ctrlc::set_handler(|| {
+        native_dialog::DialogBuilder::message()
+            .set_text("FATAL: control-c\n\nProcess killed by user")
+            .set_title("X(")
+            .set_level(native_dialog::MessageLevel::Error)
+            .alert()
+            .show()
+            .unwrap_or_else(|_| {
+                panic!("The dialog failed.\nFATAL: control-c\n\nProcess killed by user")
+            });
+        exit(130);
+    })
+    .unwrap_or_else(|_| error!("Failed to set ctrl-c hook."));
+    unsafe {
+        if let Err(_) = signal_hook::low_level::register(15, || {
+            native_dialog::DialogBuilder::message()
+                .set_text("FATAL: SIGTERM\n\nProcess killed by user")
+                .set_title("X(")
+                .set_level(native_dialog::MessageLevel::Error)
+                .alert()
+                .show()
+                .unwrap_or_else(|_| {
+                    panic!("The dialog failed.\nFATAL: SIGTERM\n\nProcess killed by user")
+                });
+            exit(133);
+        }) {
+            error!("Failed to set SIGTERM hook.");
+        };
+    };
     debug!("Starting asset loads.");
     assets::init_all().expect("Asset load failed.");
     debug!("Got through the asset loads. Thank god.");
     let mut model = model::GameModel::new();
     model.init()?;
+    miniquad::window::show_mouse(false);
     debug!("init done.");
     loop {
         model.input.kbd.update();

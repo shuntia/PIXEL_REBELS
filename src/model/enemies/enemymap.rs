@@ -1,4 +1,6 @@
+use futures::executor::block_on;
 use macroquad::prelude::*;
+use once_cell::sync::Lazy;
 
 use crate::errors::Result;
 
@@ -7,11 +9,18 @@ pub struct EnemyMap {
 }
 
 pub struct EnemyKind {
-    animation: Vec<(f32, Texture2D)>,
-    attack: f32,
-    health: f32,
-    speed: f32,
-    stunnable: bool,
+    pub animation: Vec<(f32, Texture2D)>,
+    pub cooldown: f32,
+    pub attack: f32,
+    pub health: f32,
+    pub speed: f32,
+    pub stunnable: bool,
+}
+
+static ENEMYMAP: Lazy<EnemyMap> = Lazy::new(EnemyMap::init_sync);
+
+pub fn get_enemy_info(id: u32) -> Option<&'static EnemyKind> {
+    ENEMYMAP.map.get(id as usize)
 }
 
 impl EnemyMap {
@@ -19,14 +28,18 @@ impl EnemyMap {
         Ok(EnemyMap {
             map: vec![EnemyKind {
                 animation: vec![(
-                    1.0,
+                    1.,
                     Texture2D::from_image(&load_image("assets/enemies/placeholder.png").await?),
                 )],
-                attack: 1.0,
-                health: 1.0,
-                speed: 1.0,
+                cooldown: 3.,
+                attack: 1.,
+                health: 1.,
+                speed: 1.,
                 stunnable: false,
             }],
         })
+    }
+    fn init_sync() -> Self {
+        block_on(Self::init()).unwrap()
     }
 }

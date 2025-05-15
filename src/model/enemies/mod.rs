@@ -1,4 +1,11 @@
+use ::rand::random;
 use macroquad::prelude::*;
+use rayon::{
+    iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
+    slice::ParallelSliceMut,
+};
+
+use crate::errors::Nresult;
 
 mod enemymap;
 
@@ -65,19 +72,70 @@ impl HordeEnemies {
 
     pub fn sort_y(&mut self) {
         let mut indices: Vec<usize> = (0..self.id.len()).collect();
-        indices.sort_unstable_by(|&i, &j| {
+        indices.par_sort_unstable_by(|&i, &j| {
             self.loc[i]
                 .y
                 .partial_cmp(&self.loc[j].y)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
-        self.id = indices.iter().map(|&i| self.id[i]).collect();
-        self.loc = indices.iter().map(|&i| self.loc[i]).collect();
-        self.velocity = indices.iter().map(|&i| self.velocity[i]).collect();
-        self.animation = indices.iter().map(|&i| self.animation[i]).collect();
-        self.health = indices.iter().map(|&i| self.health[i]).collect();
-        self.stun_timer = indices.iter().map(|&i| self.stun_timer[i]).collect();
+        self.id = indices.par_iter().map(|&i| self.id[i]).collect();
+        self.loc = indices.par_iter().map(|&i| self.loc[i]).collect();
+        self.velocity = indices.par_iter().map(|&i| self.velocity[i]).collect();
+        self.animation = indices.par_iter().map(|&i| self.animation[i]).collect();
+        self.health = indices.par_iter().map(|&i| self.health[i]).collect();
+        self.stun_timer = indices.par_iter().map(|&i| self.stun_timer[i]).collect();
+    }
+    pub fn move_all_enemies_towards(&mut self, player: Vec2) -> Nresult {
+        self.loc = self
+            .loc
+            .par_iter()
+            .zip(self.id.par_iter())
+            .map(|(loc, id)| {
+                Self::move_pt_towards(
+                    *loc,
+                    player,
+                    enemymap::get_enemy_info(*id)
+                        .expect("Illegal entity!")
+                        .speed,
+                )
+            })
+            .collect();
+        Ok(())
+    }
+    pub fn spawn_around(&mut self, player: Vec2, map_size: Vec2, min_dist: f32, id: u32) {
+        let mut loc = Vec2 {
+            x: random::<f32>() % map_size.x,
+            y: random::<f32>() % map_size.y,
+        };
+        while loc.distance(player) < min_dist {
+            loc = Vec2 {
+                x: random::<f32>() % map_size.x,
+                y: random::<f32>() % map_size.y,
+            };
+        }
+        self.append(id, loc);
+    }
+
+    pub fn append(&mut self, id: u32, loc: Vec2) {
+        let enemy = enemymap::get_enemy_info(id).unwrap();
+        self.id.push(id);
+        self.loc.push(loc);
+        self.animation.push(0.);
+        self.health.push(enemy.health);
+        self.velocity.push(Vec2::ZERO);
+        self.stun_timer.push(0.);
+    }
+
+    pub fn move_pt_towards(initial: Vec2, target: Vec2, distance: f32) -> Vec2 {
+        let dist_vec = target - initial;
+        let dist = dist_vec.length();
+        let norm = dist_vec.normalize();
+        if dist <= distance * get_frame_time() {
+            target
+        } else {
+            initial + norm * distance * get_frame_time()
+        }
     }
 }
 

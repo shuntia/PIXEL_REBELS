@@ -7,6 +7,7 @@ use once_cell::sync::Lazy;
 use player::Player;
 
 use crate::{
+    assets::{self, get_map},
     errors::{Nresult, Result},
     input::InputMan,
     renderer::Renderer,
@@ -135,23 +136,37 @@ impl GameModel {
     }
     fn update_gameplay(&mut self) {
         self.move_player();
+        self.update_enemies().expect("Should work.");
         self.update_map();
     }
     fn update_map(&mut self) {
         clear_background(GRAY);
     }
+    fn update_enemies(&mut self) -> Nresult {
+        if self.input.kbd.keypress(KeyCode::Space) {
+            debug!("Spawning enemy.");
+            self.world
+                .horde
+                .spawn_around(self.world.player_pos, self.world.map_size(), 10., 0);
+        }
+        self.world
+            .horde
+            .move_all_enemies_towards(self.world.player_pos)?;
+        self.world.horde.sort_y();
+        Ok(())
+    }
     fn move_player(&mut self) {
         //TODO implement hitboxes and out of bounds
-        if self.input.kbd.keydown(KeyCode::Up) {
+        if self.input.kbd.keydown(KeyCode::W) {
             self.world.player_pos.y -= get_frame_time() * self.player.speed;
         }
-        if self.input.kbd.keydown(KeyCode::Down) {
+        if self.input.kbd.keydown(KeyCode::S) {
             self.world.player_pos.y += get_frame_time() * self.player.speed;
         }
-        if self.input.kbd.keydown(KeyCode::Left) {
+        if self.input.kbd.keydown(KeyCode::A) {
             self.world.player_pos.x -= get_frame_time() * self.player.speed;
         }
-        if self.input.kbd.keydown(KeyCode::Right) {
+        if self.input.kbd.keydown(KeyCode::D) {
             self.world.player_pos.x += get_frame_time() * self.player.speed;
         }
     }
@@ -170,6 +185,9 @@ impl World {
             horde: HordeEnemies::new(),
             map: 0,
         }
+    }
+    pub fn map_size(&self) -> Vec2 {
+        get_map(self.map).unwrap().size()
     }
 }
 
