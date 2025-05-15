@@ -11,7 +11,7 @@ use crate::{
     input::InputMan,
     renderer::Renderer,
 };
-use world::World;
+pub use world::World;
 
 mod damage;
 mod enemies;
