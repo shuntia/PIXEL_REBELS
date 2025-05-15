@@ -1,6 +1,5 @@
-use std::{collections::HashSet, time::Duration};
+use std::collections::HashSet;
 
-use async_std::task::sleep;
 use macroquad::prelude::*;
 
 pub struct KbdMan {

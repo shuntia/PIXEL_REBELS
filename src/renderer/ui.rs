@@ -2,16 +2,25 @@ use crate::{
     assets::crosshair_tex,
     model::{GameMode, SAVE_PATHBUF_CACHE, Status, TitlePhase},
 };
-use futures::executor::block_on;
 use macroquad::prelude::*;
-use once_cell::sync::Lazy;
 
 pub async fn render_ui(status: &Status) {
     match &status.mode {
         GameMode::Title { phase } => render_title(phase),
         GameMode::Pause => render_pause_menu(),
-        GameMode::Play => render_crosshair(),
+        GameMode::Play => render_play(),
     }
+}
+
+fn render_play() {
+    draw_text(
+        &format!("time since: {}", get_frame_time()),
+        0.,
+        0.,
+        40.,
+        WHITE,
+    );
+    render_crosshair();
 }
 
 fn render_title(phase: &TitlePhase) {

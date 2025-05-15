@@ -1,4 +1,9 @@
-use std::{fs::File, io::Read, panic::catch_unwind, path::PathBuf};
+use std::{
+    fs::{File, create_dir, exists},
+    io::Read,
+    panic::catch_unwind,
+    path::PathBuf,
+};
 
 use futures::executor::block_on;
 use macroquad::prelude::*;
@@ -21,6 +26,9 @@ pub fn init_all() -> Nresult {
 }
 
 fn init_all_inner() {
+    if !exists("save/").unwrap() {
+        create_dir("save/");
+    }
     MAPS.is_empty();
     debug!("MAPS: {:?}", MAPS);
     SPRITES.is_empty();

@@ -7,16 +7,18 @@ use once_cell::sync::Lazy;
 use player::Player;
 
 use crate::{
-    assets::{self, get_map},
     errors::{Nresult, Result},
     input::InputMan,
     renderer::Renderer,
 };
+use world::World;
 
 mod damage;
 mod enemies;
 mod entity;
 mod player;
+mod weapons;
+mod world;
 
 // CONSTANTS
 
@@ -99,6 +101,7 @@ impl GameModel {
         match self.status.mode {
             GameMode::Title { .. } => self.update_title(),
             GameMode::Play => self.update_gameplay(),
+            GameMode::Pause => self.update_pause(),
             _ => todo!("implement"),
         }
     }
@@ -134,7 +137,9 @@ impl GameModel {
             }
         }
     }
+
     fn update_gameplay(&mut self) {
+        self.catch_pause();
         self.move_player();
         self.update_enemies().expect("Should work.");
         self.update_map();
@@ -143,51 +148,66 @@ impl GameModel {
         clear_background(GRAY);
     }
     fn update_enemies(&mut self) -> Nresult {
-        if self.input.kbd.keypress(KeyCode::Space) {
-            debug!("Spawning enemy.");
+        if self.input.kbd.keydown(KeyCode::Space) {
             self.world
                 .horde
-                .spawn_around(self.world.player_pos, self.world.map_size(), 10., 0);
+                .spawn_around(self.world.player_pos, self.world.map_size(), 100., 0);
         }
         self.world
             .horde
             .move_all_enemies_towards(self.world.player_pos)?;
         self.world.horde.sort_y();
+        self.world.horde.kill_touching(self.world.player_pos, 1.0);
         Ok(())
+    }
+    fn set_y(&mut self, y: f32) {
+        if y < 0. {
+            self.world.player_pos.y = 0.;
+        } else if y > self.world.map_size().y {
+            self.world.player_pos.y = self.world.map_size().y;
+        } else {
+            self.world.player_pos.y = y;
+        }
+    }
+    fn set_x(&mut self, x: f32) {
+        if x < 0. {
+            self.world.player_pos.x = 0.;
+        } else if x > self.world.map_size().x {
+            self.world.player_pos.x = self.world.map_size().x;
+        } else {
+            self.world.player_pos.x = x;
+        }
+    }
+    fn move_x(&mut self, delta_x: f32) {
+        self.set_x(self.world.player_pos.x + delta_x)
+    }
+    fn move_y(&mut self, delta_y: f32) {
+        self.set_y(self.world.player_pos.y + delta_y)
     }
     fn move_player(&mut self) {
         //TODO implement hitboxes and out of bounds
         if self.input.kbd.keydown(KeyCode::W) {
-            self.world.player_pos.y -= get_frame_time() * self.player.speed;
+            self.move_y(-get_frame_time() * self.player.speed);
         }
         if self.input.kbd.keydown(KeyCode::S) {
-            self.world.player_pos.y += get_frame_time() * self.player.speed;
+            self.move_y(get_frame_time() * self.player.speed);
         }
         if self.input.kbd.keydown(KeyCode::A) {
-            self.world.player_pos.x -= get_frame_time() * self.player.speed;
+            self.move_x(-get_frame_time() * self.player.speed);
         }
         if self.input.kbd.keydown(KeyCode::D) {
-            self.world.player_pos.x += get_frame_time() * self.player.speed;
+            self.move_x(get_frame_time() * self.player.speed);
         }
     }
-}
-
-pub struct World {
-    pub player_pos: Vec2,
-    pub horde: enemies::HordeEnemies,
-    pub map: u32,
-}
-
-impl World {
-    pub fn new() -> Self {
-        World {
-            player_pos: vec2(0.0, 0.0),
-            horde: HordeEnemies::new(),
-            map: 0,
+    fn catch_pause(&mut self) {
+        if self.input.kbd.keypress(KeyCode::Escape) {
+            self.status.mode = GameMode::Pause;
         }
     }
-    pub fn map_size(&self) -> Vec2 {
-        get_map(self.map).unwrap().size()
+    fn update_pause(&mut self) {
+        if self.input.kbd.keypress(KeyCode::Escape) {
+            self.status.mode = GameMode::Play;
+        }
     }
 }
 

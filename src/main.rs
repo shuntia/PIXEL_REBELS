@@ -2,14 +2,13 @@
 
 use errors::Nresult;
 use macroquad::prelude::*;
-use signal_hook::{consts::signal, low_level::exit};
+use signal_hook::low_level::exit;
 
 mod assets;
 mod errors;
 mod input;
 mod model;
 mod renderer;
-mod weapons;
 
 #[macroquad::main("PIXEL_REBELS")]
 async fn main() -> Nresult {
@@ -17,7 +16,7 @@ async fn main() -> Nresult {
     set_panic_handler(|msg, backtrace| async move {
         native_dialog::DialogBuilder::message()
             .set_text(
-            format!("FATAL ERROR:\n{msg:#?}\nbacktrace:\n{backtrace}\n\nPlease report this to the devs at https://github.com/shuntia/pixel_rebels"))
+            format!("FATAL ERROR:\n{msg}\nbacktrace:\n{backtrace}\n\nPlease report this to the devs at https://github.com/shuntia/pixel_rebels"))
             .set_level(native_dialog::MessageLevel::Error)
             .set_title(":(")
             .alert()
@@ -52,6 +51,20 @@ async fn main() -> Nresult {
             exit(133);
         }) {
             error!("Failed to set SIGTERM hook.");
+        };
+        if let Err(_) = signal_hook::low_level::register(6, || {
+            native_dialog::DialogBuilder::message()
+                .set_text("FATAL: SIGABRT\n\nProcess aborted itself.")
+                .set_title(":O")
+                .set_level(native_dialog::MessageLevel::Error)
+                .alert()
+                .show()
+                .unwrap_or_else(|_| {
+                    panic!("The dialog failed.\nFATAL: SIGABRT\n\nProcess aborted itself.")
+                });
+            exit(134);
+        }) {
+            error!("Failed to set SIGABRT hook.");
         };
     };
     debug!("Starting asset loads.");

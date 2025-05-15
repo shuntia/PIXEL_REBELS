@@ -2,7 +2,7 @@ use rand::random;
 
 use crate::{
     errors::{Nresult, Result},
-    weapons::Weapon,
+    model::weapons::Weapon,
 };
 
 const CRIT_MULTIPLIER: f32 = 2.0;
