@@ -1,7 +1,11 @@
+use std::sync::atomic::AtomicBool;
+
 use crate::{
-    assets::crosshair_tex,
+    assets::CROSSHAIR_TEX,
+    errors::Nresult,
     model::{GameMode, SAVE_PATHBUF_CACHE, Status, TitlePhase},
 };
+use futures::channel::mpsc::UnboundedReceiver;
 use macroquad::prelude::*;
 
 pub async fn render_ui(status: &Status) {
@@ -12,7 +16,32 @@ pub async fn render_ui(status: &Status) {
     }
 }
 
+const DEBUG_FONT_SIZE: f32 = 50.;
+
+pub fn render_dbg(rx: &mut UnboundedReceiver<String>) -> Nresult {
+    let mut targets = Vec::new();
+    while let Ok(Some(s)) = rx.try_next() {
+        targets.push(s);
+    }
+    for i in 0..targets.len() {
+        draw_text(
+            &targets[i],
+            0.,
+            i as f32 * DEBUG_FONT_SIZE + 75. + DEBUG_FONT_SIZE * i as f32,
+            DEBUG_FONT_SIZE,
+            WHITE,
+        );
+    }
+    Ok(())
+}
+
+static WAS_PAUSE: AtomicBool = AtomicBool::new(false);
+
 fn render_play() {
+    if WAS_PAUSE.load(std::sync::atomic::Ordering::Relaxed) {
+        miniquad::window::show_mouse(false);
+        WAS_PAUSE.store(false, std::sync::atomic::Ordering::Release);
+    }
     draw_text(
         &format!("time since: {}", get_frame_time()),
         0.,
@@ -28,7 +57,7 @@ fn render_title(phase: &TitlePhase) {
         TitlePhase::Start => {
             clear_background(BLACK);
             draw_text(
-                "PIXEL_REBELS",
+                "APCS_FINAL",
                 screen_width() / 2.0 - 250.0,
                 screen_height() / 2.0 - 20.0,
                 100.0,
@@ -84,6 +113,10 @@ fn render_menu(selection: u32) {
 }
 
 fn render_pause_menu() {
+    if !WAS_PAUSE.load(std::sync::atomic::Ordering::Relaxed) {
+        WAS_PAUSE.store(true, std::sync::atomic::Ordering::Release);
+        miniquad::window::show_mouse(true);
+    }
     draw_rectangle(
         50.0,
         50.0,
@@ -102,7 +135,7 @@ fn render_pause_menu() {
 fn render_crosshair() {
     let mouse_pos = mouse_position();
     draw_texture_ex(
-        &crosshair_tex,
+        &CROSSHAIR_TEX,
         mouse_pos.0 - 25.,
         mouse_pos.1 - 25.,
         WHITE,

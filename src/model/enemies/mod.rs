@@ -1,10 +1,12 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 use ::rand::random;
 use macroquad::prelude::*;
 use rayon::prelude::*;
 
 use crate::errors::Nresult;
+
+use super::damage::{Damageable, Effects};
 
 mod enemymap;
 
@@ -18,6 +20,16 @@ pub struct Enemy {
     pub stun_timer: f32,
 }
 
+impl Damageable for Enemy {
+    fn take_damage(&mut self, damage: super::damage::Damage, effects: Vec<Effects>) -> Nresult {
+        self.take_damage_raw(damage.evaluate()?)
+    }
+    fn take_damage_raw(&mut self, damage: f32) -> Nresult {
+        self.health -= damage;
+        Ok(())
+    }
+}
+
 pub struct HordeEnemies {
     pub enemies: Vec<Enemy>,
 }
@@ -26,6 +38,12 @@ impl Deref for HordeEnemies {
     type Target = Vec<Enemy>;
     fn deref(&self) -> &Self::Target {
         &self.enemies
+    }
+}
+
+impl DerefMut for HordeEnemies {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.enemies
     }
 }
 
@@ -111,6 +129,24 @@ impl HordeEnemies {
         });
     }
 
+    pub fn sort(&mut self) {
+        self.enemies.par_sort_unstable_by(|a, b| {
+            match a
+                .loc
+                .y
+                .partial_cmp(&b.loc.y)
+                .unwrap_or(std::cmp::Ordering::Equal)
+            {
+                std::cmp::Ordering::Equal => a
+                    .loc
+                    .x
+                    .partial_cmp(&b.loc.x)
+                    .unwrap_or(std::cmp::Ordering::Equal),
+                neq => neq,
+            }
+        });
+    }
+
     pub fn move_all_enemies_towards(&mut self, player: Vec2) -> Nresult {
         let frametime = get_frame_time();
         self.enemies.par_iter_mut().for_each(|enemy| {
@@ -159,4 +195,3 @@ impl Default for HordeEnemies {
         Self::new()
     }
 }
-

@@ -11,8 +11,8 @@ use once_cell::sync::Lazy;
 
 use crate::errors::{GameError, Nresult, Result};
 
-static MAPS: Lazy<Vec<Texture2D>> = Lazy::new(|| block_on(init_map()));
-static SPRITES: Lazy<Vec<Texture2D>> = Lazy::new(|| block_on(init_sprites()));
+pub static MAPS: Lazy<Vec<Texture2D>> = Lazy::new(|| block_on(init_map()));
+pub static SPRITES: Lazy<Vec<Texture2D>> = Lazy::new(|| block_on(init_sprites()));
 
 const ASSET_LOC: &str = "assets/";
 const MAP_LOC: &str = "maps/";
@@ -27,7 +27,7 @@ pub fn init_all() -> Nresult {
 
 fn init_all_inner() {
     if !exists("save/").unwrap() {
-        create_dir("save/");
+        let _ = create_dir("save/");
     }
     MAPS.is_empty();
     debug!("MAPS: {:?}", MAPS);
@@ -65,7 +65,7 @@ pub async fn load_texture2D(path: PathBuf) -> Result<Texture2D> {
 #[allow(clippy::manual_async_fn)]
 fn gen_loader(path: PathBuf) -> impl std::future::Future<Output = Texture2D> {
     async move {
-        let mut tex = load_texture(path.to_str().unwrap()).await.unwrap();
+        let tex = load_texture(path.to_str().unwrap()).await.unwrap();
         tex.set_filter(FilterMode::Nearest);
         tex
     }
@@ -76,7 +76,7 @@ pub fn get_map(id: u32) -> Result<&'static Texture2D> {
         .ok_or(GameError::AssetLoadFailure(format!("MAP {id} NOT FOUND")))
 }
 
-pub static crosshair_tex: Lazy<Texture2D> = Lazy::new(|| block_on(load_crosshair()));
+pub static CROSSHAIR_TEX: Lazy<Texture2D> = Lazy::new(|| block_on(load_crosshair()));
 
 async fn load_crosshair() -> Texture2D {
     let mut asset_loc = ASSET_LOC.to_owned();

@@ -34,7 +34,7 @@ impl EnemyMap {
                 cooldown: 3.,
                 attack: 1.,
                 health: 1.,
-                speed: 50.,
+                speed: 10.,
                 stunnable: false,
             }],
         })

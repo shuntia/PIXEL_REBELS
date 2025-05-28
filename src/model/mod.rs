@@ -1,7 +1,11 @@
-use std::{fs::DirEntry, sync::RwLock};
+use std::{
+    fs::DirEntry,
+    sync::{Arc, RwLock},
+};
 
 use async_std::{path::PathBuf, stream::StreamExt};
 use enemies::HordeEnemies;
+use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use macroquad::prelude::*;
 use once_cell::sync::Lazy;
 use player::Player;
@@ -10,15 +14,16 @@ use crate::{
     errors::{Nresult, Result},
     input::InputMan,
     renderer::Renderer,
+    util::get_mouse_angle,
 };
 pub use world::World;
 
 mod damage;
 mod enemies;
 mod entity;
-mod player;
-mod weapons;
-mod world;
+pub mod player;
+pub mod weapons;
+pub mod world;
 
 // CONSTANTS
 
@@ -49,6 +54,7 @@ pub static SAVE_PATHBUF_CACHE: Lazy<RwLock<Vec<std::path::PathBuf>>> = Lazy::new
 
 /// The GameModel is responsible for generating data that the
 pub struct GameModel {
+    pub debug: Option<Arc<UnboundedSender<String>>>,
     pub status: Status,
     pub world: World,
     pub player: Player,
@@ -59,6 +65,7 @@ pub struct GameModel {
 impl GameModel {
     pub fn new() -> Self {
         GameModel {
+            debug: None,
             status: Status {
                 health: 100,
                 lives: 5,
@@ -94,7 +101,7 @@ impl GameModel {
         Ok(ret)
     }
     pub async fn call_render(&mut self) {
-        self.renderer.render_world(&self.world).await;
+        self.renderer.render_world(&self.world, &self.player).await;
         self.renderer.render_ui(&self.status).await;
     }
     pub fn update(&mut self) {
@@ -139,10 +146,21 @@ impl GameModel {
     }
 
     fn update_gameplay(&mut self) {
+        let _ = self.log(&format!("MOUSE ANGLE: {}", get_mouse_angle()));
+        let (x, y) = mouse_position();
+        let _ = self.log(&format!("MOUSE POS: {} {}", x, y));
         self.catch_pause();
         self.move_player();
         self.update_enemies().expect("Should work.");
+        self.update_attack();
         self.update_map();
+        self.update_damage();
+    }
+    fn update_damage(&mut self) {}
+    fn update_attack(&mut self) {
+        if is_mouse_button_pressed(MouseButton::Left) {
+            let _ = self.player.weapon.update_damage(&mut self.world);
+        }
     }
     fn update_map(&mut self) {
         clear_background(GRAY);
@@ -156,8 +174,8 @@ impl GameModel {
         self.world
             .horde
             .move_all_enemies_towards(self.world.player_pos)?;
-        self.world.horde.sort_y();
-        self.world.horde.kill_touching(self.world.player_pos, 1.0);
+        self.world.horde.sort();
+        self.world.horde.retain(|el| el.health > 0.);
         Ok(())
     }
     fn set_y(&mut self, y: f32) {
@@ -208,6 +226,20 @@ impl GameModel {
         if self.input.kbd.keypress(KeyCode::Escape) {
             self.status.mode = GameMode::Play;
         }
+    }
+    pub fn set_debug_tx(&mut self, sender: Arc<UnboundedSender<String>>) -> Nresult {
+        self.debug = Some(sender);
+        Ok(())
+    }
+    pub fn call_render_dbg(&mut self, rx: &mut UnboundedReceiver<String>) -> Nresult {
+        self.renderer.render_debug(rx)
+    }
+    pub fn log(&mut self, s: &str) -> Nresult {
+        if let Some(tx) = &self.debug {
+            tx.unbounded_send(s.into())
+                .map_err(|el| crate::GameError::Misc(Box::new(el)))?;
+        }
+        Ok(())
     }
 }
 

@@ -1,6 +1,5 @@
 use super::*;
 use crate::assets::get_map;
-use macroquad::prelude::*;
 
 pub struct World {
     pub player_pos: Vec2,

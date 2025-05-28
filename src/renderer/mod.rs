@@ -1,28 +1,28 @@
-use camera::{UICamera, WorldCamera};
+use futures::channel::mpsc::UnboundedReceiver;
 
-use crate::model::{Status, World};
+use crate::{
+    errors::Nresult,
+    model::{Status, player::Player},
+};
 
-mod camera;
 mod ui;
 mod world;
 
-pub struct Renderer {
-    wcamera: WorldCamera,
-    uicamera: UICamera,
-}
+pub struct Renderer {}
 impl Renderer {
     pub async fn render_ui(&mut self, stat: &Status) {
         ui::render_ui(stat).await
     }
 
-    pub async fn render_world(&mut self, world: &World) {
-        world::render_world(world).await
+    pub async fn render_world(&mut self, world: &crate::model::World, player: &Player) {
+        world::render_world(&world, &player).await
+    }
+
+    pub fn render_debug(&mut self, rx: &mut UnboundedReceiver<String>) -> Nresult {
+        ui::render_dbg(rx)
     }
 
     pub fn new() -> Renderer {
-        Renderer {
-            wcamera: WorldCamera::new(macroquad::camera::Camera2D::default()),
-            uicamera: UICamera::new(),
-        }
+        Renderer {}
     }
 }
