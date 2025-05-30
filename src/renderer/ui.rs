@@ -8,6 +8,8 @@ use crate::{
 use futures::channel::mpsc::UnboundedReceiver;
 use macroquad::prelude::*;
 
+pub static LOG: AtomicBool = AtomicBool::new(false);
+
 pub async fn render_ui(status: &Status) {
     match &status.mode {
         GameMode::Title { phase } => render_title(phase),
@@ -19,6 +21,9 @@ pub async fn render_ui(status: &Status) {
 const DEBUG_FONT_SIZE: f32 = 50.;
 
 pub fn render_dbg(rx: &mut UnboundedReceiver<String>) -> Nresult {
+    if !LOG.load(std::sync::atomic::Ordering::Relaxed) {
+        return Ok(());
+    }
     let mut targets = Vec::new();
     while let Ok(Some(s)) = rx.try_next() {
         targets.push(s);

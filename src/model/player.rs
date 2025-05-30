@@ -46,7 +46,7 @@ impl Default for Player {
                 stun: 0.,
                 animation: 0.,
                 kind: super::weapons::WeaponKind::Melee {
-                    range: 100.,
+                    range: 1000.,
                     angle: PI / 3.,
                 },
             },

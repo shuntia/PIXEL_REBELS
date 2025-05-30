@@ -5,8 +5,8 @@ use crate::{
     model::{Status, player::Player},
 };
 
-mod ui;
-mod world;
+pub mod ui;
+pub mod world;
 
 pub struct Renderer {}
 impl Renderer {

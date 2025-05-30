@@ -10,7 +10,6 @@ use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use macroquad::prelude::*;
 use once_cell::sync::Lazy;
 use player::Player;
-use rayon::iter::IntoParallelRefIterator;
 
 use crate::{
     errors::{Nresult, Result},
@@ -152,12 +151,20 @@ impl GameModel {
         let _ = self.log(&format!("MOUSE ANGLE: {}", get_mouse_angle()));
         let (x, y) = mouse_position();
         let _ = self.log(&format!("MOUSE POS: {} {}", x, y));
+        let _ = self.log(&format!("PLAYER POS: {}", self.world.player_pos));
+        self.update_debug();
         self.catch_pause();
         self.move_player();
         self.update_enemies().expect("Should work.");
         self.update_attack();
         self.update_map();
         self.update_damage();
+    }
+    fn update_debug(&mut self) -> Nresult {
+        if self.input.kbd.keypress(KeyCode::Slash) {
+            crate::renderer::ui::LOG.fetch_not(std::sync::atomic::Ordering::Release);
+        }
+        Ok(())
     }
     fn update_damage(&mut self) -> Nresult {
         if let Ok(o) = find_in_distance(&mut self.world.horde, self.world.player_pos, DAMAGE_DIST) {
@@ -189,7 +196,7 @@ impl GameModel {
         if self.input.kbd.keydown(KeyCode::Space) {
             self.world
                 .horde
-                .spawn_around(self.world.player_pos, self.world.map_size(), 100., 0);
+                .spawn_around(self.world.player_pos, self.world.map_size(), 1000., 0);
         }
         self.world
             .horde

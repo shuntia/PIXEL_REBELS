@@ -6,13 +6,16 @@ use async_std::sync::RwLock;
 use futures::channel::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use macroquad::miniquad::window::screen_size;
 use macroquad::prelude::*;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 use once_cell::sync::OnceCell;
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
 
 use crate::errors::{GameError, Nresult, Result};
+use crate::model::World;
 use crate::model::enemies::Enemy;
+use crate::renderer::world::player_on_scr;
 
 pub static INTERRUPT: AtomicBool = AtomicBool::new(false);
 
@@ -114,6 +117,10 @@ pub fn set_hooks() {
 pub fn get_mouse_angle() -> f32 {
     ((Vec2::from(screen_size()) / 2. - Vec2::from(mouse_position())).to_angle() - PI).abs()
 }
+pub fn get_mouse_angle_centered(world: &World) -> f32 {
+    ((crate::renderer::world::player_on_scr(world) - Vec2::from(mouse_position())).to_angle() - PI)
+        .abs()
+}
 
 pub fn log_frame(s: String) {
     let _ = DEBUG_TX.get().unwrap().unbounded_send(s);
@@ -147,4 +154,10 @@ pub fn find_in_distance<'a>(
     } else {
         Err(GameError::Unexpected("Failed to find any entities!".into()))
     }
+}
+
+#[derive(Debug, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
+#[repr(u8)]
+pub enum PlayerAnimation {
+    Idle = 0,
 }

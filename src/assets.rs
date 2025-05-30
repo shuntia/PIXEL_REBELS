@@ -13,10 +13,12 @@ use crate::errors::{GameError, Nresult, Result};
 
 pub static MAPS: Lazy<Vec<Texture2D>> = Lazy::new(|| block_on(init_map()));
 pub static SPRITES: Lazy<Vec<Texture2D>> = Lazy::new(|| block_on(init_sprites()));
+pub static ENEMIES: Lazy<Vec<Texture2D>> = Lazy::new(|| block_on(init_enemies()));
 
 const ASSET_LOC: &str = "assets/";
 const MAP_LOC: &str = "maps/";
 const PLAYER_ANIM_LOC: &str = "player_anim";
+const ENEMY_LOC: &str = "enemies";
 
 pub fn init_all() -> Nresult {
     if let Err(e) = catch_unwind(init_all_inner) {
@@ -38,8 +40,16 @@ async fn init_map() -> Vec<Texture2D> {
     let mut map_loc = PathBuf::from(ASSET_LOC);
     map_loc.push(MAP_LOC);
     let mut handles = Vec::new();
-    for i in map_loc.read_dir().unwrap() {
-        handles.push(gen_loader(i.unwrap().path()));
+    let mut maps = map_loc
+        .read_dir()
+        .unwrap()
+        .map(core::result::Result::unwrap)
+        .map(|el| el.path())
+        .collect::<Vec<_>>();
+    maps.sort_unstable_by(|a, b| a.file_name().unwrap().cmp(b.file_name().unwrap()));
+
+    for i in maps {
+        handles.push(gen_loader(i));
     }
     futures::future::join_all(handles).await
 }
@@ -47,6 +57,23 @@ async fn init_map() -> Vec<Texture2D> {
 async fn init_sprites() -> Vec<Texture2D> {
     let mut player_anim_loc = PathBuf::from(ASSET_LOC);
     player_anim_loc.push(PLAYER_ANIM_LOC);
+    let mut handles = Vec::new();
+    let mut files = player_anim_loc
+        .read_dir()
+        .unwrap()
+        .map(core::result::Result::unwrap)
+        .map(|el| el.path())
+        .collect::<Vec<_>>();
+    files.sort_unstable_by(|a, b| a.file_name().unwrap().cmp(b.file_name().unwrap()));
+    for i in files {
+        handles.push(gen_loader(i));
+    }
+    futures::future::join_all(handles).await
+}
+
+async fn init_enemies() -> Vec<Texture2D> {
+    let mut player_anim_loc = PathBuf::from(ASSET_LOC);
+    player_anim_loc.push(ENEMY_LOC);
     let mut handles = Vec::new();
     for i in player_anim_loc.read_dir().unwrap() {
         handles.push(gen_loader(i.unwrap().path()));

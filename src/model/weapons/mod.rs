@@ -2,7 +2,7 @@ use std::{f32::consts::PI, ops::Deref};
 
 use crate::{
     errors::Nresult,
-    util::{self, get_mouse_angle},
+    util::{self, get_mouse_angle, get_mouse_angle_centered},
 };
 
 use super::{World, damage::Damageable};
@@ -28,7 +28,7 @@ pub struct Weapon {
 
 impl Weapon {
     pub fn attack(&mut self, world: &mut World) -> Nresult {
-        let mangle = get_mouse_angle() + PI;
+        let mangle = get_mouse_angle_centered(world) + PI;
         match self.kind {
             WeaponKind::Melee { range, .. } => {
                 if self.cooldown_counter > 0. {
