@@ -4,22 +4,24 @@ use std::{
 };
 
 use async_std::{path::PathBuf, stream::StreamExt};
-use enemies::HordeEnemies;
+use damage::Damageable;
+use enemies::{HordeEnemies, enemymap::get_enemy_info};
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use macroquad::prelude::*;
 use once_cell::sync::Lazy;
 use player::Player;
+use rayon::iter::IntoParallelRefIterator;
 
 use crate::{
     errors::{Nresult, Result},
     input::InputMan,
     renderer::Renderer,
-    util::get_mouse_angle,
+    util::{find_in_distance, get_mouse_angle},
 };
 pub use world::World;
 
 mod damage;
-mod enemies;
+pub mod enemies;
 mod entity;
 pub mod player;
 pub mod weapons;
@@ -28,6 +30,7 @@ pub mod world;
 // CONSTANTS
 
 pub const SAVE_LOC: &str = "save/";
+pub const DAMAGE_DIST: f32 = 10.;
 
 #[derive(Clone, Copy)]
 pub enum TitlePhase {
@@ -156,10 +159,27 @@ impl GameModel {
         self.update_map();
         self.update_damage();
     }
-    fn update_damage(&mut self) {}
+    fn update_damage(&mut self) -> Nresult {
+        if let Ok(o) = find_in_distance(&mut self.world.horde, self.world.player_pos, DAMAGE_DIST) {
+            o.iter().for_each(|el| {
+                self.player
+                    .take_damage_raw(get_enemy_info(el.id).unwrap().attack);
+            });
+        }
+        if self.player.health <= 0. {
+            panic!("You died!!!\nI haven't made the game over though:P")
+        }
+        self.log(&format!("health: {}", self.player.health));
+        Ok(())
+    }
     fn update_attack(&mut self) {
-        if is_mouse_button_pressed(MouseButton::Left) {
-            let _ = self.player.weapon.update_damage(&mut self.world);
+        self.player.weapon.adjust_cooldown();
+        self.log(&format!(
+            "cooldown: {}",
+            self.player.weapon.cooldown_counter
+        ));
+        if is_mouse_button_down(MouseButton::Left) {
+            let _ = self.player.weapon.attack(&mut self.world);
         }
     }
     fn update_map(&mut self) {

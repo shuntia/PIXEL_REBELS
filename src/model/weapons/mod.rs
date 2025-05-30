@@ -19,6 +19,7 @@ pub struct Weapon {
     pub power: f32,
     pub crit_chance: f32,
     pub cooldown: f32,
+    pub cooldown_counter: f32,
     pub knockback: f32,
     pub stun: f32,
     pub animation: f32,
@@ -26,10 +27,15 @@ pub struct Weapon {
 }
 
 impl Weapon {
-    pub fn update_damage(&self, world: &mut World) -> Nresult {
+    pub fn attack(&mut self, world: &mut World) -> Nresult {
         let mangle = get_mouse_angle() + PI;
         match self.kind {
             WeaponKind::Melee { range, .. } => {
+                if self.cooldown_counter > 0. {
+                    return Ok(());
+                } else {
+                    self.cooldown_counter = self.cooldown;
+                }
                 let find_y_center = world.player_pos.y;
                 let bottom = world
                     .horde
@@ -60,6 +66,11 @@ impl Weapon {
                 }
             }
             _ => Ok(()),
+        }
+    }
+    pub fn adjust_cooldown(&mut self) {
+        if self.cooldown_counter > 0. {
+            self.cooldown_counter -= get_frame_time();
         }
     }
 }

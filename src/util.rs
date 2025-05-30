@@ -7,8 +7,12 @@ use futures::channel::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use macroquad::miniquad::window::screen_size;
 use macroquad::prelude::*;
 use once_cell::sync::OnceCell;
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
+};
 
 use crate::errors::{GameError, Nresult, Result};
+use crate::model::enemies::Enemy;
 
 pub static INTERRUPT: AtomicBool = AtomicBool::new(false);
 
@@ -31,17 +35,29 @@ pub async fn create_mpsc() -> crate::errors::Result<UnboundedReceiver<String>> {
 }
 
 pub fn set_hooks() {
-    set_panic_handler(|msg, backtrace| async move {
+    std::panic::set_hook(Box::new(|data| {
         INTERRUPT.store(true, std::sync::atomic::Ordering::Release);
+        let payload = data.payload();
+        let msg = if let Some(s) = payload.downcast_ref::<GameError>() {
+            format!("{}", s)
+        } else if let Some(s) = payload.downcast_ref::<String>() {
+            format!("{}", s)
+        } else if let Some(s) = payload.downcast_ref::<&'static str>() {
+            format!("{}", s)
+        } else {
+            "Unknown Error.".to_owned()
+        };
+        let loc = data.location();
         native_dialog::DialogBuilder::message()
             .set_text(
-            format!("FATAL ERROR:\n{msg}\nbacktrace:\n{backtrace}\n\nPlease report this to the devs at https://github.com/shuntia/pixel_rebels"))
+            format!("FATAL ERROR:\n{msg}\nLocation:\n{loc:#?}\n\nPlease report this at https://github.com/shuntia/pixel_rebels"))
             .set_level(native_dialog::MessageLevel::Error)
             .set_title(":(")
             .alert()
             .show()
-            .unwrap_or_else(|_|panic!("The dialog failed. I don't know why.\nOriginal Message:{msg}\nOriginal Backtrace:\n{backtrace}"));
-    });
+            .unwrap_or_else(|_|panic!("The dialog failed. I don't know why.\n\nMessage:\n{msg}\n\nLocation:\n{loc:#?}"));
+        eprintln!("panicked:\n{:#?}\nbacktrace:\n{:#?}", msg, data.location());
+    }));
     debug!("Panic hook set.");
     ctrlc::set_handler(|| {
         INTERRUPT.store(true, std::sync::atomic::Ordering::Release);
@@ -101,4 +117,34 @@ pub fn get_mouse_angle() -> f32 {
 
 pub fn log_frame(s: String) {
     let _ = DEBUG_TX.get().unwrap().unbounded_send(s);
+}
+
+pub fn find_in_distance<'a>(
+    enemies: &'a mut Vec<Enemy>,
+    center: Vec2,
+    dist: f32,
+) -> Result<Vec<&'a mut Enemy>> {
+    let find_y_center = center.y;
+    let bottom = enemies
+        .par_iter()
+        .enumerate()
+        .find_first(|(_, el)| el.loc.y >= find_y_center - dist);
+    let top_idx;
+    if let Some((found, _)) = bottom {
+        if let Some((idx, _)) = enemies[found..]
+            .par_iter()
+            .enumerate()
+            .find_first(|(_, el)| el.loc.y > find_y_center + dist)
+        {
+            top_idx = found + idx;
+        } else {
+            top_idx = enemies.len();
+        }
+        Ok(enemies[found..top_idx]
+            .par_iter_mut()
+            .filter(|el| el.loc.distance(center) <= dist)
+            .collect())
+    } else {
+        Err(GameError::Unexpected("Failed to find any entities!".into()))
+    }
 }

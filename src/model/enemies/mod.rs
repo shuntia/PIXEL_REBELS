@@ -8,7 +8,7 @@ use crate::errors::Nresult;
 
 use super::damage::{Damageable, Effects};
 
-mod enemymap;
+pub mod enemymap;
 
 #[derive(Clone)]
 pub struct Enemy {

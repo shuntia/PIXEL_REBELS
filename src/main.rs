@@ -2,7 +2,7 @@
 
 use errors::{GameError, Nresult};
 use macroquad::prelude::*;
-use util::{create_mpsc, set_hooks};
+use util::{DEBUG_TX, create_mpsc, set_hooks};
 
 mod assets;
 mod errors;
@@ -33,6 +33,10 @@ async fn main() -> Nresult {
         if util::INTERRUPT.load(std::sync::atomic::Ordering::Relaxed) {
             continue;
         }
+        let _ = DEBUG_TX
+            .get()
+            .unwrap()
+            .unbounded_send(format!("FPS: {}", get_fps()));
         model.input.kbd.update();
         model.update();
         model.call_render().await;

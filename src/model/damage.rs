@@ -27,6 +27,8 @@ pub struct Damage<'a> {
     crit_override: bool,
     /// calculated cache
     calculated: Option<f32>,
+    /// stun time of attack
+    pub stun: f32,
 }
 
 impl<'a> Damage<'a> {

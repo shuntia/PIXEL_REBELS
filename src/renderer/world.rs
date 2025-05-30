@@ -25,7 +25,7 @@ async fn draw_map(world: &World) -> Nresult {
         -world.player_pos.y * max_size + h / 2.,
         tex.width() * max_size,
         tex.height() * max_size,
-        GREEN,
+        GRAY,
     );
     draw_texture_ex(
         tex,
@@ -73,6 +73,25 @@ fn draw_weapon(weapon: &Weapon) -> Nresult {
                 5.,
                 RED,
             );
+            if weapon.cooldown_counter > 0. {
+                draw_line(
+                    center.x,
+                    center.y,
+                    center.x + range * mangle.cos() * wscale,
+                    center.y - range * mangle.sin() * wscale,
+                    5.,
+                    if weapon.cooldown_counter == weapon.cooldown {
+                        GREEN
+                    } else {
+                        if is_mouse_button_down(MouseButton::Left) {
+                            BLUE
+                        } else {
+                            RED
+                        }
+                    },
+                );
+            }
+
             draw_arc(
                 screen_width() / 2.,
                 screen_height() / 2.,
