@@ -36,7 +36,7 @@ impl Default for Player {
             health: 100.,
             attack: 5.,
             defense: 5.,
-            speed: 100.,
+            speed: 300.,
             weapon: Weapon {
                 power: 10.,
                 crit_chance: 0.01,

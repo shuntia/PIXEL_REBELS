@@ -3,10 +3,10 @@ use std::sync::atomic::AtomicBool;
 use crate::{
     assets::{self, get_map},
     errors::{Nresult, Result},
-    model::{World, player::Player, weapons::Weapon},
+    model::{World, enemies::enemymap, player::Player, weapons::Weapon},
     util::{PlayerAnimation, get_mouse_angle, get_mouse_angle_centered},
 };
-use macroquad::{miniquad::window::screen_size, prelude::*};
+use macroquad::{miniquad::window::screen_size, prelude::*, telemetry::frame};
 
 pub async fn render_world(world: &World, player: &Player) {
     let tex = get_map(world.map).unwrap();
@@ -138,7 +138,7 @@ fn draw_weapon(
     Ok(())
 }
 
-const SCALE_DIV: f32 = 250.;
+const SCALE_DIV: f32 = 200.;
 
 pub fn get_world_scale() -> f32 {
     Vec2::from(screen_size()).max_element() / SCALE_DIV
@@ -152,7 +152,8 @@ fn draw_enemies(world: &World, camera_pos: Vec2, scale: f32) {
     let half_screen = screen / 2.0;
 
     for i in &world.horde {
-        let tex = &assets::ENEMIES[i.id as usize];
+        let anim = &enemymap::get_enemy_info(i.id).unwrap().animation;
+        let tex = &anim.get((i.animation * 10.) as usize).unwrap().1;
         let enemy_screen_pos = (i.loc - camera_pos) * scale + half_screen;
         let tex_size = tex.size() * scale;
         let draw_pos = enemy_screen_pos - tex_size / 2.0;

@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use ::rand::random;
-use macroquad::prelude::*;
+use macroquad::{prelude::*, telemetry::frame};
 use rayon::prelude::*;
 
 use crate::errors::Nresult;
@@ -187,6 +187,12 @@ impl HordeEnemies {
         let dist_vec = target - initial;
         let norm = dist_vec.normalize();
         initial + norm * distance * time
+    }
+    pub fn update_anim_frames(&mut self) {
+        let frame_time = get_frame_time();
+        self.enemies
+            .par_iter_mut()
+            .for_each(|el| el.animation = (el.animation + frame_time) % 0.6);
     }
 }
 

@@ -159,6 +159,10 @@ impl GameModel {
         self.update_attack();
         self.update_map();
         self.update_damage();
+        self.world.horde.update_anim_frames();
+        self.world
+            .horde
+            .spawn_around(self.world.player_pos, self.world.map_size(), 1000., 0);
     }
     fn update_debug(&mut self) -> Nresult {
         if self.input.kbd.keypress(KeyCode::Slash) {
