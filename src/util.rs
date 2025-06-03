@@ -61,7 +61,6 @@ pub fn set_hooks() {
             .unwrap_or_else(|_|panic!("The dialog failed. I don't know why.\n\nMessage:\n{msg}\n\nLocation:\n{loc:#?}"));
         eprintln!("panicked:\n{:#?}\nbacktrace:\n{:#?}", msg, data.location());
     }));
-    debug!("Panic hook set.");
     ctrlc::set_handler(|| {
         INTERRUPT.store(true, std::sync::atomic::Ordering::Release);
         native_dialog::DialogBuilder::message()

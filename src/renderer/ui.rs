@@ -3,18 +3,19 @@ use std::sync::atomic::AtomicBool;
 use crate::{
     assets::CROSSHAIR_TEX,
     errors::Nresult,
-    model::{GameMode, SAVE_PATHBUF_CACHE, Status, TitlePhase},
+    model::{GameMode, GameModel, SAVE_PATHBUF_CACHE, Status, TitlePhase, player::Player},
 };
 use futures::channel::mpsc::UnboundedReceiver;
 use macroquad::prelude::*;
 
 pub static LOG: AtomicBool = AtomicBool::new(false);
 
-pub async fn render_ui(status: &Status) {
+pub async fn render_ui(status: &Status, player: &Player) {
     match &status.mode {
         GameMode::Title { phase } => render_title(phase),
         GameMode::Pause => render_pause_menu(),
-        GameMode::Play => render_play(),
+        GameMode::Play => render_play(player),
+        GameMode::GameOver => render_gameover(),
     }
 }
 
@@ -42,18 +43,12 @@ pub fn render_dbg(rx: &mut UnboundedReceiver<String>) -> Nresult {
 
 static WAS_PAUSE: AtomicBool = AtomicBool::new(false);
 
-fn render_play() {
+fn render_play(model: &Player) {
     if WAS_PAUSE.load(std::sync::atomic::Ordering::Relaxed) {
         miniquad::window::show_mouse(false);
         WAS_PAUSE.store(false, std::sync::atomic::Ordering::Release);
     }
-    draw_text(
-        &format!("time since: {}", get_frame_time()),
-        0.,
-        0.,
-        40.,
-        WHITE,
-    );
+    render_health(model);
     render_crosshair();
 }
 
@@ -83,6 +78,23 @@ fn render_title(phase: &TitlePhase) {
             clear_background(BLACK);
         }
     }
+}
+
+fn render_health(player: &Player) {
+    draw_text("Health: ", 10., screen_height() - 50., 30., WHITE);
+    let xoffset = 100.;
+    draw_rectangle(
+        xoffset,
+        screen_height() - 50.,
+        (xoffset + screen_width()) * (player.health / player.max_health),
+        50.,
+        GREEN,
+    );
+}
+
+fn render_gameover() {
+    clear_background(BLACK);
+    draw_text("GAME OVER", 100., screen_height() / 2.0 - 100., 100., WHITE);
 }
 
 fn render_menu(selection: u32) {

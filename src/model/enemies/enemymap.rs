@@ -60,7 +60,7 @@ impl EnemyMap {
                 animation: tex,
                 cooldown: 3.,
                 attack: 1.,
-                health: 1.,
+                health: 30.,
                 speed: 50.,
                 stunnable: false,
             }],

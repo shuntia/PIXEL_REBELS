@@ -1,3 +1,5 @@
+// IMPORTS
+
 use std::{
     fs::DirEntry,
     sync::{Arc, RwLock},
@@ -31,18 +33,23 @@ pub mod world;
 pub const SAVE_LOC: &str = "save/";
 pub const DAMAGE_DIST: f32 = 10.;
 
+/// Phase of title
 #[derive(Clone, Copy)]
 pub enum TitlePhase {
     Start,
     Menu(u32),
 }
 
+/// current phase of game
 #[derive(Clone, Copy)]
 pub enum GameMode {
     Title { phase: TitlePhase },
     Play,
     Pause,
+    GameOver,
 }
+
+/// cache of save files
 pub static SAVE_PATHBUF_CACHE: Lazy<RwLock<Vec<std::path::PathBuf>>> = Lazy::new(|| {
     RwLock::new(
         std::path::PathBuf::from(SAVE_LOC)
@@ -54,7 +61,7 @@ pub static SAVE_PATHBUF_CACHE: Lazy<RwLock<Vec<std::path::PathBuf>>> = Lazy::new
     )
 });
 
-/// The GameModel is responsible for generating data that the
+/// The GameModel is responsible for generating data.
 pub struct GameModel {
     pub debug: Option<Arc<UnboundedSender<String>>>,
     pub status: Status,
@@ -104,14 +111,14 @@ impl GameModel {
     }
     pub async fn call_render(&mut self) {
         self.renderer.render_world(&self.world, &self.player).await;
-        self.renderer.render_ui(&self.status).await;
+        self.renderer.render_ui(&self.status, &self.player).await;
     }
     pub fn update(&mut self) {
         match self.status.mode {
             GameMode::Title { .. } => self.update_title(),
             GameMode::Play => self.update_gameplay(),
             GameMode::Pause => self.update_pause(),
-            _ => todo!("implement"),
+            _ => {}
         }
     }
     fn update_title(&mut self) {
@@ -178,7 +185,14 @@ impl GameModel {
             });
         }
         if self.player.health <= 0. {
-            panic!("You died!!!\nI haven't made the game over though:P")
+            if self.status.lives == 1 {
+                self.status.mode = GameMode::GameOver;
+            } else {
+                self.player.health = self.player.max_health;
+                self.status.lives -= 1;
+                self.world.horde.clear();
+            }
+            show_mouse(true);
         }
         self.log(&format!("health: {}", self.player.health));
         Ok(())

@@ -13,22 +13,26 @@ mod util;
 
 #[macroquad::main("PIXEL_REBELS")]
 async fn main() -> Nresult {
-    debug!("Starting.");
+    println!("Starting.");
+    print!("Setting hooks...");
     set_hooks();
-    debug!("Starting asset loads.");
+    println!(" OK");
+    print!("Starting asset loads...");
     assets::init_all().expect("Asset load failed.");
-    debug!("Got through the asset loads.");
-    debug!("initializing model...");
+    println!(" OK");
+    print!("initializing model...");
     let mut model = model::GameModel::new();
     model.init()?;
-    debug!("initializing debug systems...");
+    println!(" OK");
+    print!("initializing debug systems...");
     let mut rx = create_mpsc().await?;
     let tx = util::DEBUG_TX.get().unwrap().clone();
     model
         .set_debug_tx(tx)
         .expect("Errored non non-erroring operation(???)");
+    println!(" OK");
     miniquad::window::show_mouse(false);
-    debug!("init done.");
+    println!("ALL CLEAR");
     loop {
         if util::INTERRUPT.load(std::sync::atomic::Ordering::Relaxed) {
             continue;

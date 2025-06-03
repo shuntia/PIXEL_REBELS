@@ -32,7 +32,6 @@ fn init_all_inner() {
         let _ = create_dir("save/");
     }
     MAPS.is_empty();
-    debug!("MAPS: {:?}", MAPS);
     SPRITES.is_empty();
 }
 

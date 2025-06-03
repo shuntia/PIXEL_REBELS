@@ -2,7 +2,7 @@ use futures::channel::mpsc::UnboundedReceiver;
 
 use crate::{
     errors::Nresult,
-    model::{Status, player::Player},
+    model::{GameModel, Status, player::Player},
 };
 
 pub mod ui;
@@ -10,8 +10,8 @@ pub mod world;
 
 pub struct Renderer {}
 impl Renderer {
-    pub async fn render_ui(&mut self, stat: &Status) {
-        ui::render_ui(stat).await
+    pub async fn render_ui(&mut self, stat: &Status, player: &Player) {
+        ui::render_ui(stat, player).await
     }
 
     pub async fn render_world(&mut self, world: &crate::model::World, player: &Player) {

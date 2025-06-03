@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use super::{damage::Damageable, weapons::Weapon};
 
 pub struct Player {
+    pub max_health: f32,
     pub health: f32,
     pub attack: f32,
     pub defense: f32,
@@ -21,6 +22,7 @@ impl Player {
         stun: f32,
     ) -> Self {
         Self {
+            max_health: health,
             health,
             attack,
             defense,
@@ -33,21 +35,22 @@ impl Player {
 impl Default for Player {
     fn default() -> Self {
         Self {
+            max_health: 100.,
             health: 100.,
             attack: 5.,
             defense: 5.,
             speed: 300.,
             weapon: Weapon {
                 power: 10.,
-                crit_chance: 0.01,
+                crit_chance: 0.1,
                 cooldown: 0.5,
                 cooldown_counter: 0.,
                 knockback: 0.,
                 stun: 0.,
                 animation: 0.,
                 kind: super::weapons::WeaponKind::Melee {
-                    range: 1000.,
-                    angle: PI / 3.,
+                    range: 500.,
+                    angle: PI / 6.,
                 },
             },
             stun: 0.,
