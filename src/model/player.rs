@@ -41,7 +41,7 @@ impl Default for Player {
             defense: 5.,
             speed: 300.,
             weapon: Weapon {
-                power: 10.,
+                power: 5.,
                 crit_chance: 0.1,
                 cooldown: 0.3,
                 cooldown_counter: 0.,
@@ -49,7 +49,7 @@ impl Default for Player {
                 stun: 0.,
                 animation: 0.,
                 kind: super::weapons::WeaponKind::Melee {
-                    range: 500.,
+                    range: 250.,
                     angle: PI / 3.,
                 },
             },
