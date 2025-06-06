@@ -49,7 +49,18 @@ fn render_play(model: &Player) {
         WAS_PAUSE.store(false, std::sync::atomic::Ordering::Release);
     }
     render_health(model);
+    render_defeated(crate::model::DEFEATED.load(std::sync::atomic::Ordering::Relaxed));
     render_crosshair();
+}
+
+fn render_defeated(defeated: u32) {
+    draw_text(
+        format!("Defeated: {}", defeated).as_str(),
+        20.,
+        100.,
+        50.,
+        WHITE,
+    );
 }
 
 fn render_title(phase: &TitlePhase) {
@@ -70,6 +81,13 @@ fn render_title(phase: &TitlePhase) {
                 30.0,
                 GRAY,
             );
+            draw_text(
+                "WASD and click. / to open debug overlay.",
+                screen_width() / 2. - 250.,
+                screen_height() / 2. + 200.,
+                30.,
+                GRAY,
+            );
         }
         TitlePhase::Menu(selection) => {
             render_menu(*selection);
@@ -81,12 +99,12 @@ fn render_title(phase: &TitlePhase) {
 }
 
 fn render_health(player: &Player) {
-    draw_text("Health: ", 10., screen_height() - 50., 30., WHITE);
+    draw_text("Health: ", 10., screen_height() - 50., 50., WHITE);
     let xoffset = 100.;
     draw_rectangle(
         xoffset,
-        screen_height() - 50.,
-        (xoffset + screen_width()) * (player.health / player.max_health),
+        screen_height() - 25.,
+        (screen_width() - xoffset) * (player.health / player.max_health),
         50.,
         GREEN,
     );

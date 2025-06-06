@@ -2,14 +2,15 @@
 
 use std::{
     fs::DirEntry,
-    sync::{Arc, RwLock},
+    ops::Deref,
+    sync::{Arc, RwLock, atomic::AtomicU32},
 };
 
 use async_std::{path::PathBuf, stream::StreamExt};
 use damage::Damageable;
 use enemies::{HordeEnemies, enemymap::get_enemy_info};
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
-use macroquad::prelude::*;
+use macroquad::{prelude::*, rand::ChooseRandom};
 use once_cell::sync::Lazy;
 use player::Player;
 
@@ -70,6 +71,8 @@ pub struct GameModel {
     pub renderer: Renderer,
     pub input: InputMan,
 }
+
+pub static DEFEATED: AtomicU32 = AtomicU32::new(0);
 
 impl GameModel {
     pub fn new() -> Self {
@@ -167,9 +170,6 @@ impl GameModel {
         self.update_map();
         self.update_damage();
         self.world.horde.update_anim_frames();
-        self.world
-            .horde
-            .spawn_around(self.world.player_pos, self.world.map_size(), 1000., 0);
     }
     fn update_debug(&mut self) -> Nresult {
         if self.input.kbd.keypress(KeyCode::Slash) {
@@ -216,10 +216,24 @@ impl GameModel {
                 .horde
                 .spawn_around(self.world.player_pos, self.world.map_size(), 1000., 0);
         }
+        let probability: Vec<u32> = vec![0, 0, 0, 0, 0, 1, 1, 1, 2, 2];
+        let id = probability.choose().unwrap();
+        if *id != 0 {
+            self.world.horde.spawn_around(
+                self.world.player_pos,
+                self.world.map_size(),
+                1000.,
+                id - 1,
+            );
+        }
         self.world
             .horde
             .move_all_enemies_towards(self.world.player_pos)?;
         self.world.horde.sort();
+        DEFEATED.fetch_add(
+            self.world.horde.iter().filter(|el| el.health <= 0.).count() as u32,
+            std::sync::atomic::Ordering::Release,
+        );
         self.world.horde.retain(|el| el.health > 0.);
         Ok(())
     }
