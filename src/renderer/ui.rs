@@ -68,7 +68,7 @@ fn render_title(phase: &TitlePhase) {
         TitlePhase::Start => {
             clear_background(BLACK);
             draw_text(
-                "APCS_FINAL",
+                "PIXEL_REBELS",
                 screen_width() / 2.0 - 250.0,
                 screen_height() / 2.0 - 20.0,
                 100.0,
