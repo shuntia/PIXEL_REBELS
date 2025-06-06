@@ -41,7 +41,7 @@ impl Default for Player {
             defense: 5.,
             speed: 300.,
             weapon: Weapon {
-                power: 5.,
+                power: 10.,
                 crit_chance: 0.1,
                 cooldown: 0.3,
                 cooldown_counter: 0.,
