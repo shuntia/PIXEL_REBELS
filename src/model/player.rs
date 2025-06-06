@@ -43,14 +43,14 @@ impl Default for Player {
             weapon: Weapon {
                 power: 10.,
                 crit_chance: 0.1,
-                cooldown: 0.5,
+                cooldown: 0.3,
                 cooldown_counter: 0.,
                 knockback: 0.,
                 stun: 0.,
                 animation: 0.,
                 kind: super::weapons::WeaponKind::Melee {
                     range: 500.,
-                    angle: PI / 6.,
+                    angle: PI / 3.,
                 },
             },
             stun: 0.,
